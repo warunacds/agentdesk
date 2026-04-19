@@ -1,0 +1,272 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Linux deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: wails build -platform linux/amd64 -tags webkit2_41 -ldflags "-X main.Version=$VERSION"
+
+      - name: Package
+        run: |
+          cd build/bin
+          tar -czf AgentDesk-linux-amd64.tar.gz AgentDesk
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AgentDesk-linux-amd64
+          path: build/bin/AgentDesk-linux-amd64.tar.gz
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Install signing certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+          security create-keychain -p "" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "" $KEYCHAIN_PATH
+          echo "$CERTIFICATE_P12" | base64 --decode > $RUNNER_TEMP/cert.p12
+          security import $RUNNER_TEMP/cert.p12 -k $KEYCHAIN_PATH -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" $KEYCHAIN_PATH
+          security list-keychains -d user -s $KEYCHAIN_PATH login.keychain-db
+
+      - name: Build (Apple Silicon)
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: wails build -platform darwin/arm64 -ldflags "-X main.Version=$VERSION"
+
+      - name: Sign, DMG, notarize (Apple Silicon)
+        env:
+          SIGNING_IDENTITY: "Developer ID Application: Waruna Chathuranga de Silva (7M7URNW6F9)"
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          chmod +x scripts/sign-and-notarize.sh
+          ./scripts/sign-and-notarize.sh arm64
+          mv build/dmg/AgentDesk-macOS-arm64.dmg build/bin/AgentDesk-macOS-arm64.dmg
+
+      - name: Clean for next build
+        run: rm -rf build/bin/AgentDesk.app
+
+      - name: Build (Intel)
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: wails build -platform darwin/amd64 -ldflags "-X main.Version=$VERSION"
+
+      - name: Sign, DMG, notarize (Intel)
+        env:
+          SIGNING_IDENTITY: "Developer ID Application: Waruna Chathuranga de Silva (7M7URNW6F9)"
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          ./scripts/sign-and-notarize.sh amd64
+          mv build/dmg/AgentDesk-macOS-amd64.dmg build/bin/AgentDesk-macOS-intel.dmg
+
+      - name: Upload arm64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AgentDesk-macOS-arm64
+          path: build/bin/AgentDesk-macOS-arm64.dmg
+
+      - name: Upload Intel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AgentDesk-macOS-intel
+          path: build/bin/AgentDesk-macOS-intel.dmg
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: wails build -platform windows/amd64 -ldflags "-X main.Version=$VERSION"
+
+      - name: Package
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build\bin\AgentDesk.exe -DestinationPath build\bin\AgentDesk-windows-amd64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AgentDesk-windows-amd64
+          path: build/bin/AgentDesk-windows-amd64.zip
+
+  upload-to-r2:
+    needs: [build-linux, build-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare upload directory
+        run: |
+          mkdir -p upload
+          cp artifacts/AgentDesk-macOS-arm64/AgentDesk-macOS-arm64.dmg upload/
+          cp artifacts/AgentDesk-macOS-intel/AgentDesk-macOS-intel.dmg upload/
+          cp artifacts/AgentDesk-linux-amd64/AgentDesk-linux-amd64.tar.gz upload/
+          cp artifacts/AgentDesk-windows-amd64/AgentDesk-windows-amd64.zip upload/
+          ls -lh upload/
+
+      - name: Generate checksums.txt
+        run: |
+          cd upload
+          sha256sum AgentDesk-* > checksums.txt
+          cat checksums.txt
+
+      - name: Upload to Cloudflare R2 (versioned path only)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          pip install awscli
+          for file in upload/*; do
+            filename=$(basename "$file")
+            aws s3 cp "$file" "s3://agentdesk-releases/${VERSION}/${filename}" \
+              --endpoint-url "${R2_ENDPOINT}"
+            echo "Uploaded: ${VERSION}/${filename}"
+          done
+
+      - name: Update website download page
+        env:
+          VERSION: ${{ github.ref_name }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "${HOMEBREW_TAP_TOKEN}" ]; then
+            echo "HOMEBREW_TAP_TOKEN not set, skipping website update"
+            exit 0
+          fi
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/warunacds/agentdesk.sh.git" website
+          cd website
+          ./scripts/update-download-page.sh "${VERSION}" ../upload/checksums.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add download.html
+          if git diff --cached --quiet; then
+            echo "No changes to download.html"
+          else
+            git commit -m "chore: update download page to ${VERSION}"
+            git push
+          fi
+
+      - name: Update Homebrew cask
+        env:
+          VERSION: ${{ github.ref_name }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "${HOMEBREW_TAP_TOKEN}" ]; then
+            echo "HOMEBREW_TAP_TOKEN not set, skipping cask update"
+            exit 0
+          fi
+          VERSION_NUM="${VERSION#v}"
+          SHA_ARM=$(grep 'AgentDesk-macOS-arm64.dmg' upload/checksums.txt | awk '{print $1}')
+          SHA_INTEL=$(grep 'AgentDesk-macOS-intel.dmg' upload/checksums.txt | awk '{print $1}')
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/warunacds/homebrew-tap.git" tap
+          cd tap
+          cat > Casks/agentdesk.rb << CASK
+          cask "agentdesk" do
+            version "${VERSION_NUM}"
+
+            on_arm do
+              url "https://releases.agentdesk.sh/v#{version}/AgentDesk-macOS-arm64.dmg"
+              sha256 "${SHA_ARM}"
+            end
+
+            on_intel do
+              url "https://releases.agentdesk.sh/v#{version}/AgentDesk-macOS-intel.dmg"
+              sha256 "${SHA_INTEL}"
+            end
+
+            name "Agent Desk"
+            desc "AI agent skill file manager"
+            homepage "https://agentdesk.sh"
+
+            app "AgentDesk.app"
+
+            zap trash: [
+              "~/.agentdesk",
+              "~/.forge",
+            ]
+          end
+          CASK
+          sed -i 's/^          //' Casks/agentdesk.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/agentdesk.rb
+          git commit -m "chore: update agentdesk cask to ${VERSION}"
+          git push

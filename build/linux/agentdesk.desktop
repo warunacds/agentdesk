@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Forge
+Comment=AI skill file manager
+Exec=Forge %F
+Icon=forge
+Terminal=false
+Type=Application
+Categories=Development;Utility;TextEditor;
+MimeType=text/markdown;text/x-markdown;
+StartupWMClass=Forge
+Keywords=ai;agent;skill;markdown;rules;config;

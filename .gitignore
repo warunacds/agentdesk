@@ -1,0 +1,35 @@
+# Compiled binaries
+/agentdesk-core
+/forge-core
+/keygen
+
+# Wails build output
+/build/bin/
+/build/darwin/*.entitlements.tmp
+
+# Frontend build output (regenerated on every wails build)
+/frontend/dist/
+/frontend/node_modules/
+/frontend/package-lock.json.md5
+
+# macOS
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets — never commit
+*.key
+*.pem
+*-private.*
+license-private.key
+
+# Test coverage
+*.out
+coverage.*
+
+# Logs
+*.log
