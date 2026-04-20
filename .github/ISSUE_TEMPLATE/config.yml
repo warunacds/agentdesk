@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord community
+    url: https://discord.gg/5s7mNS76
+    about: For quick questions and real-time chat, join our Discord.
+  - name: User guide
+    url: https://agentdesk.sh/help
+    about: Browse the user guide before opening an issue — your question may already be answered.

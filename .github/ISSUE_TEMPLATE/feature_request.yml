@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest a new feature or improvement
+labels: ["feature request"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the situation, not the solution. This helps us spot alternatives.
+      placeholder: When I'm doing X, I have to Y every time, which takes Z minutes...
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: Your idea for how to solve it. It's fine if you only have a rough shape.
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+    validations:
+      required: false
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Does this apply to a specific platform?
+      options:
+        - All platforms
+        - macOS only
+        - Linux only
+        - Windows only
+        - Not sure
+    validations:
+      required: false

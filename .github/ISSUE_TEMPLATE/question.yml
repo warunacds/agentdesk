@@ -1,0 +1,23 @@
+name: Question
+description: Ask how to do something
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For quick questions, [Discord](https://discord.gg/5s7mNS76) is usually faster. Use this for questions that others might search for later.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What have you tried?
+      description: Skip if not relevant.
+    validations:
+      required: false

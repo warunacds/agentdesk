@@ -2,7 +2,7 @@
 
 A free, open-source desktop app for managing AI agent skills, agents, commands, and MCP servers across Claude Code, Cursor, Gemini CLI, Kiro, Amp, Codex, and more — all in one place.
 
-[agentdesk.sh](https://agentdesk.sh) · [Download](https://agentdesk.sh/download) · [User guide](https://agentdesk.sh/help) · [Discord](https://discord.gg/5s7mNS76) · [Report an issue](https://github.com/warunacds/agentdesk-issues/issues)
+[agentdesk.sh](https://agentdesk.sh) · [Download](https://agentdesk.sh/download) · [User guide](https://agentdesk.sh/help) · [Discord](https://discord.gg/5s7mNS76) · [Report an issue](https://github.com/warunacds/agentdesk/issues)
 
 ## What it does
 
@@ -100,7 +100,7 @@ go vet ./...
 cd frontend && npm run build
 ```
 
-For bugs and feature requests, use [the issue tracker](https://github.com/warunacds/agentdesk-issues/issues). For quick questions, [Discord](https://discord.gg/5s7mNS76) is faster.
+For bugs and feature requests, use [the issue tracker](https://github.com/warunacds/agentdesk/issues). For quick questions, [Discord](https://discord.gg/5s7mNS76) is faster.
 
 ## License
 
