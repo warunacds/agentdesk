@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { GetDefaultScanPaths, SelectDirectoryForTool, GetVersion } from "../../wailsjs/go/main/App";
 import { Settings, ToolMeta, ToolType, SyncStatus } from "../types";
 import { SyncPanel } from "./SyncPanel";
-import { UpgradePrompt } from "./UpgradePrompt";
 
 interface SettingsPanelProps {
   settings: Settings;
@@ -429,7 +428,7 @@ export function SettingsPanel({ settings, tools, syncStatus, onSave, onClose, on
             Sync your skill files across devices with encrypted peer-to-peer connections.
           </p>
 
-          <UpgradePrompt />
+          <SyncPanel syncStatus={syncStatus} onRefresh={onRefreshSync} />
         </div>
 
         {/* Divider */}

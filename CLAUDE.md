@@ -76,7 +76,6 @@ agentdesk/
             ├── NewSkillModal.tsx # Create skill dialog
             ├── SettingsPanel.tsx # Preferences, scan paths
             ├── SyncPanel.tsx     # P2P peer management UI
-            ├── UpgradePrompt.tsx # P2P "Coming Soon" placeholder
             ├── MarketplacePanel.tsx
             ├── MCPPanel.tsx
             ├── PluginsPanel.tsx
