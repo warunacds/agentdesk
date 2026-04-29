@@ -2,7 +2,8 @@ package sync
 
 import (
 	"crypto/rand"
-	"encoding/hex"
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -72,15 +73,19 @@ func PeerIDFromKey(priv crypto.PrivKey) (peer.ID, error) {
 
 // HumanReadableID returns a stable, human-readable "agentdesk-word-word-word"
 // identifier derived deterministically from the given peer.ID.
+//
+// We hash the peer ID with SHA-256 and slice the digest into three 32-bit
+// chunks. Each chunk picks a word from the list. Hashing is necessary because
+// libp2p peer IDs share a fixed multibase/multicodec prefix; without hashing,
+// the high-order bytes are constant across identities and the human ID
+// collapses to a small handful of word combinations.
 func HumanReadableID(pid peer.ID) string {
-	h := hex.EncodeToString([]byte(pid))
+	digest := sha256.Sum256([]byte(pid))
 	words := make([]string, 3)
 	for i := 0; i < 3; i++ {
-		idx := 0
-		for j := i * 4; j < (i+1)*4 && j < len(h); j++ {
-			idx = (idx + int(h[j])) % len(wordList)
-		}
-		words[i] = wordList[idx]
+		// Read 4 bytes per word; SHA-256 gives us 32, plenty.
+		chunk := binary.BigEndian.Uint32(digest[i*4 : i*4+4])
+		words[i] = wordList[chunk%uint32(len(wordList))]
 	}
 	return "agentdesk-" + strings.Join(words, "-")
 }
