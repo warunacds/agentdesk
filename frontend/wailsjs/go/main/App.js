@@ -102,12 +102,12 @@ export function GetDefaultSubdir(arg1) {
   return window['go']['main']['App']['GetDefaultSubdir'](arg1);
 }
 
-export function GetExtraDirs() {
-  return window['go']['main']['App']['GetExtraDirs']();
-}
-
 export function GetDeviceID() {
   return window['go']['main']['App']['GetDeviceID']();
+}
+
+export function GetExtraDirs() {
+  return window['go']['main']['App']['GetExtraDirs']();
 }
 
 export function GetFullPeerID() {

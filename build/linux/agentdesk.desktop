@@ -1,11 +1,11 @@
 [Desktop Entry]
-Name=Forge
+Name=Agent Desk
 Comment=AI skill file manager
-Exec=Forge %F
-Icon=forge
+Exec=Agent Desk %F
+Icon=agentdesk
 Terminal=false
 Type=Application
 Categories=Development;Utility;TextEditor;
 MimeType=text/markdown;text/x-markdown;
-StartupWMClass=Forge
+StartupWMClass=Agent Desk
 Keywords=ai;agent;skill;markdown;rules;config;

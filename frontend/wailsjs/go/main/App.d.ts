@@ -5,7 +5,6 @@ import {main} from '../models';
 import {team} from '../models';
 import {sync} from '../models';
 
-
 export function AddDirectory(arg1:string):Promise<void>;
 
 export function AddPeerByID(arg1:string,arg2:string):Promise<void>;
@@ -32,7 +31,6 @@ export function CreateFromTemplate(arg1:string,arg2:string,arg3:string):Promise<
 
 export function CreateSkill(arg1:string,arg2:skills.ToolType,arg3:string):Promise<skills.Skill>;
 
-
 export function DeleteCollection(arg1:string):Promise<void>;
 
 export function DeleteSkill(arg1:string):Promise<void>;
@@ -57,14 +55,13 @@ export function GetDefaultScanPaths():Promise<Record<string, Array<string>>>;
 
 export function GetDefaultSubdir(arg1:skills.ToolType):Promise<string>;
 
-export function GetExtraDirs():Promise<Array<string>>;
-
 export function GetDeviceID():Promise<string>;
+
+export function GetExtraDirs():Promise<Array<string>>;
 
 export function GetFullPeerID():Promise<string>;
 
 export function GetKnownTools():Promise<Array<skills.ToolMeta>>;
-
 
 export function GetMCPConfigs():Promise<Array<skills.MCPToolConfig>>;
 
